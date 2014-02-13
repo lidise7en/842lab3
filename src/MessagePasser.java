@@ -49,6 +49,8 @@ public class MessagePasser {
 	private String localName;
 	private ServerSocket hostListenSocket;
 	private SocketInfo hostSocketInfo;
+
+
 	private Config config;
 	private static int currSeqNum;
 
@@ -58,8 +60,8 @@ public class MessagePasser {
 	private Map<String, Integer> sendSeqNums = new HashMap<String, Integer>();
 
 	
-	//map of resourcegroup
-	private Map<String, ArrayList<String>> rscGroupMap = new HashMap<String, ArrayList<String>>();
+	//map of from hostname to G(hostname)
+	private Map<String, String> rscGroupMap = new HashMap<String, String>();
 	
 
   private enum RuleType {
@@ -920,11 +922,18 @@ public class MessagePasser {
 		this.seqNums = seqNums;
 	}
 
-	public Map<String, ArrayList<String>> getRscGroupMap() {
+	public Map<String, String> getRscGroupMap() {
 	   return rscGroupMap;
 	}
 
-  public void setRscGroupMap(Map<String, ArrayList<String>> rscGroupMap) {
+	public Config getConfig() {
+		return config;
+	}
+
+	public void setConfig(Config config) {
+		this.config = config;
+	}
+  public void setRscGroupMap(Map<String, String> rscGroupMap) {
     this.rscGroupMap = rscGroupMap;
   }
 
