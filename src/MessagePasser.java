@@ -57,7 +57,12 @@ public class MessagePasser {
 	private Map<SrcGroup, Integer> seqNums = new HashMap<SrcGroup, Integer>();
 	private Map<String, Integer> sendSeqNums = new HashMap<String, Integer>();
 
-	private enum RuleType {
+	
+	//map of resourcegroup
+	private Map<String, ArrayList<String>> rscGroupMap = new HashMap<String, ArrayList<String>>();
+	
+
+  private enum RuleType {
 		SEND, RECEIVE,
 	}
 
@@ -914,5 +919,13 @@ public class MessagePasser {
 	public void setSeqNums(Map<SrcGroup, Integer> seqNums) {
 		this.seqNums = seqNums;
 	}
+
+	public Map<String, ArrayList<String>> getRscGroupMap() {
+	   return rscGroupMap;
+	}
+
+  public void setRscGroupMap(Map<String, ArrayList<String>> rscGroupMap) {
+    this.rscGroupMap = rscGroupMap;
+  }
 
 }

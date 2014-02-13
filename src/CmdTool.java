@@ -22,8 +22,11 @@ public class CmdTool {
 	 * 
 	 */
 	private MessagePasser msgPasser;
-	public CmdTool(MessagePasser msgPasser) {
+	private ResourceClient rscClient;
+	
+	public CmdTool(MessagePasser msgPasser, ResourceClient rscClient) {
 		this.msgPasser = msgPasser;
+		this.rscClient = rscClient;
 	}
 	public void executing() {
 		String cmdInput = new String();
@@ -154,7 +157,8 @@ System.out.println("send TS:" + this.msgPasser.getClockSer().getTs());
 			System.exit(0);
 		}
 		MessagePasser msgPasser = new MessagePasser(args[0], args[1]);
-		CmdTool tool = new CmdTool(msgPasser);
+		ResourceClient rscClient = new ResourceClient(msgPasser);
+		CmdTool tool = new CmdTool(msgPasser, rscClient);
 		tool.executing();
 	}
 }
