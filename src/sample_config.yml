@@ -1,0 +1,73 @@
+configuration :
+    - name : p1 
+      ip: 128.237.222.197
+      port : 49996
+      clockType: vector
+    - name : p2 
+      ip : 128.237.222.197
+      port : 42558   
+      clockType: vector
+    - name : p3  
+      ip : 128.237.208.157 
+      port : 50003  
+      clockType: vector
+    - name : p4
+      ip : 128.237.208.157 
+      port : 59877  
+      clockType: vector
+    - name : logger
+      ip : 128.237.222.197
+      port : 59879
+      clockType: vector
+sendRules :
+    - action : delay
+      dest : p4
+      kind : HTTP_REPLY
+      
+    - action : delay
+      kind : delay
+    
+    - action : drop
+      src : p1  
+      dest : p3
+
+    - action : drop
+      src : p1
+      dest : p2
+      kind : Ack
+
+    - action : drop
+      src : p1
+      kind : Ran
+
+    - action : duplicate
+      kind : Request
+      dest : p4
+
+    - action : duplicate
+      kind : Random
+      dest : p2
+
+    - action : delay
+      kind : log    
+      
+receiveRules :    
+    - action : drop
+      src : p2
+      dest : p4
+      duplicate : true
+
+    - action : delay
+      dest : p4
+      kind : HTTP_DELAY
+groupList : 
+    - groupName : Group1
+      members :
+        - membername : p1
+        - membername : p2
+        - membername : p4
+
+    - groupName : Group2
+      members : 
+        - membername : p2
+        - membername : p3
