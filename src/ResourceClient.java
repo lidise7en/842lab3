@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 
 
@@ -14,10 +15,51 @@ public class ResourceClient {
 
   private ClientState state;
   private boolean voted;
+  private LinkedList<Message> recvPermitQueue = new LinkedList<Message>();
+  private LinkedList<Message> recvWaitQueue = new LinkedList<Message>();
   
+  public class listenThread extends Thread {
+	  public listenThread() {}
+	  public void run() {
+		  while(true) {
+			  TimeStampedMessage receiveMsg = (TimeStampedMessage)mp.receive();
+			  if(receiveMsg.getKind().equals("RESOURCE_REQ")) {
+				  if(state == ClientState.HELD || voted) {
+					  recvWaitQueue.add(receiveMsg);
+				  }
+				  else {
+					  String dest = receiveMsg.getSrc();
+					  mp.send(new TimeStampedMessage(dest, "RESOURCE_RESPONSE", "", mp.getClockSer().getTs(), mp.getLocalName()));
+					  voted = true;
+				  }
+			  }
+			  else if(receiveMsg.getKind().equals("RESOURCE_RELEASE")) {
+				  if(!recvWaitQueue.isEmpty()) {
+					  TimeStampedMessage removedMsg = (TimeStampedMessage)recvWaitQueue.remove();
+					  String dest = removedMsg.getSrc();
+					  mp.send(new TimeStampedMessage(dest, "RESOURCE_RESPONSE", "", mp.getClockSer().getTs(), mp.getLocalName()));
+					  voted = true;
+				  }
+				  else {
+					  voted = false;
+				  }
+			  }
+			  else if(receiveMsg.getKind().equals("RESOURCE_RESPONSE")) {
+				  synchronized(recvPermitQueue) {
+					  recvPermitQueue.add(receiveMsg);
+				  }
+			  }
+			  else {
+				  System.out.println("Wierd Message received in Client");
+			  }
+		  }
+	  }
+	  
+  }
   public class collectResponse extends Thread {
 
 		public collectResponse() {
+			
 		}
 
 		public void run() {
@@ -32,12 +74,15 @@ public class ResourceClient {
 				}
 			}
 			while(memberSet.size() != 0) {
-				
-				TimeStampedMessage receiveMsg = (TimeStampedMessage)mp.receive();
-				if(receiveMsg != null && receiveMsg.getKind().equals("RESOURCERESPONSE")) {
-					String src = receiveMsg.getSrc();
-					if(memberSet.contains(src)) {
-						memberSet.remove(src);
+				synchronized(recvPermitQueue) {
+					if(!recvPermitQueue.isEmpty()) {
+						TimeStampedMessage receiveMsg = (TimeStampedMessage)recvPermitQueue.remove();
+						if(receiveMsg != null && receiveMsg.getKind().equals("RESOURCE_RESPONSE")) {
+							String src = receiveMsg.getSrc();
+							if(memberSet.contains(src)) {
+								memberSet.remove(src);
+							}
+						}
 					}
 				}
 				try {
@@ -55,6 +100,7 @@ public class ResourceClient {
     this.mp = msgPasser;
     this.state = ClientState.RELEASED;
     this.voted = false;
+    new listenThread().start();
   }
   
   public MessagePasser getMp() {
@@ -83,10 +129,19 @@ public class ResourceClient {
   }
   
   public void getResource() {
-	  this.state = ClientState.WANTED;
-	  String groupName = this.mp.getRscGroupMap().get(this.mp.getLocalName());
-	  sendGetMessages(groupName);
-	  (new collectResponse()).start();
+	  if(this.state == ClientState.RELEASED && !this.voted) {
+		  this.state = ClientState.WANTED;
+		  String groupName = this.mp.getRscGroupMap().get(this.mp.getLocalName());
+		  synchronized(this.recvPermitQueue) {
+			  this.recvPermitQueue.clear();
+		  }
+		  sendGetMessages(groupName);
+		  
+		  (new collectResponse()).start();
+	  }
+	  else {
+		  System.out.println("Not in initial state");
+	  }
   }
   
   public void sendGetMessages(String groupList) {
@@ -94,7 +149,7 @@ public class ResourceClient {
 		  System.out.println("The group is illegal");
 		  return;
 	  }
-	  this.mp.send(new TimeStampedMessage(groupList, "RESOURCEREQ", "", this.mp.getClockSer().getTs(), this.mp.getLocalName()));
+	  this.mp.send(new TimeStampedMessage(groupList, "RESOURCE_REQ", "", this.mp.getClockSer().getTs(), this.mp.getLocalName()));
 	  
   }
 }
