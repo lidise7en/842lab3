@@ -10,7 +10,9 @@ public class ResourceClient {
   private LinkedList<Message> recvWaitQueue = new LinkedList<Message>();
   private Integer numMsgSent = 0;
   private Integer numMsgReceived = 0;
-  
+
+
+private String voteHost;
   private static boolean DEBUG = true;
   
   public enum ClientState {
@@ -21,6 +23,7 @@ public class ResourceClient {
     this.mp = msgPasser;
     this.state = ClientState.RELEASED;
     this.voted = false;
+    this.voteHost = null;
     new listenThread().start();
   }
   
@@ -109,12 +112,21 @@ public class ResourceClient {
     this.voted = voted;
   }
   
+  public String getVoteHost() {
+	return voteHost;
+  }
+
+  public void setVoteHost(String voteHost) {
+	this.voteHost = voteHost;
+  }
+
   public void printStatus() {
     if (state == ClientState.HELD)
       System.out.printf("Client " + mp.getLocalName() + ": currently granted resource!\n");
     else 
       System.out.printf("Client " + mp.getLocalName() + ": currently being blocked!\n");
     System.out.println("Message sent: " + numMsgSent + ", received: " + numMsgReceived);
+    System.out.println("voteHost is" + this.voteHost);
   }
   
   public class listenThread extends Thread {
@@ -133,9 +145,10 @@ public class ResourceClient {
           
           if(receiveMsg.getKind().equals("RESOURCE_REQ")) {
             if(state == ClientState.HELD || voted) {
-              synchronized(recvWaitQueue) {
-                addToQueue(recvWaitQueue, receiveMsg);
-                
+              if(!receiveMsg.getSrc().equals(voteHost)) {
+            	synchronized(recvWaitQueue) {
+            		addToQueue(recvWaitQueue, receiveMsg); 
+            	}
               }
             }
             else {
@@ -149,10 +162,11 @@ public class ResourceClient {
                 numMsgSent++;
               }
               voted = true;
+              voteHost = dest;
             }
           }
           else if(receiveMsg.getKind().equals("RESOURCE_RELEASE")) {
-            if(!recvWaitQueue.isEmpty()) {
+            if(!recvWaitQueue.isEmpty() && receiveMsg.getSrc().equals(voteHost)) {
               synchronized(recvWaitQueue) {
                 TimeStampedMessage removedMsg = (TimeStampedMessage)recvWaitQueue.remove();
                 String dest = removedMsg.getSrc();
@@ -165,10 +179,12 @@ public class ResourceClient {
                   numMsgSent++;
                 }
                 voted = true;
+                voteHost = dest;
               }
             }
             else {
               voted = false;
+              voteHost = null;
             }
           }
           else if(receiveMsg.getKind().equals("RESOURCE_RESPONSE")) {
