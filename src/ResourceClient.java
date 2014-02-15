@@ -31,7 +31,7 @@ public class ResourceClient {
   }
   
   public void getResource() {
-	  if(this.state == ClientState.RELEASED && !this.voted) {
+	  if(this.state == ClientState.RELEASED) {
 		  this.state = ClientState.WANTED;
 		  String groupName = this.mp.getRscGroupMap().get(this.mp.getLocalName());
 		  synchronized(this.recvPermitQueue) {
