@@ -8,6 +8,8 @@ public class ResourceClient {
   private boolean voted;
   private LinkedList<Message> recvPermitQueue = new LinkedList<Message>();
   private LinkedList<Message> recvWaitQueue = new LinkedList<Message>();
+  private Integer numMsgSent = 0;
+  private Integer numMsgReceived = 0;
   
   public enum ClientState {
     RELEASED, WANTED, HELD
@@ -56,8 +58,26 @@ public class ResourceClient {
 		  return;
 	  }
 	  this.mp.send(new TimeStampedMessage(groupList, kind, "", this.mp.getClockSer().getTs(), this.mp.getLocalName()));
+	  synchronized(numMsgSent) {
+	    //TODO: get group size, shouldn't hard code here
+	    numMsgSent += 3;
+	  }
   }
   
+  public void addToQueue(LinkedList<Message> queue, TimeStampedMessage msg) {
+    int i = 0, size = 0;
+    synchronized (queue) {
+      size = queue.size();
+      for (; i < size; i++) {
+        TimeStampedMessage tmp = (TimeStampedMessage) queue.get(i);
+        if ((msg).getMsgTS().compare(
+            tmp.getMsgTS()) != TimeStampRelation.greaterEqual) {
+          break;
+        }
+      }
+      queue.add(i, msg);
+    }
+  }
   
   public MessagePasser getMp() {
     return mp;
@@ -83,21 +103,38 @@ public class ResourceClient {
     this.voted = voted;
   }
   
+  public void printStatus() {
+    if (state == ClientState.HELD)
+      System.out.printf("Client " + mp.getLocalName() + ": currently granted resource!\n");
+    else 
+      System.out.printf("Client " + mp.getLocalName() + ": currently being blocked!\n");
+    System.out.println("Message sent: " + numMsgSent + ", received: " + numMsgReceived);
+  }
+  
   public class listenThread extends Thread {
     public listenThread() {}
+    
     public void run() {
       while(true) {
         TimeStampedMessage receiveMsg = (TimeStampedMessage)mp.receive();
         if (receiveMsg != null) {
+          synchronized(numMsgReceived) {
+            numMsgReceived++;
+          }
+          
           if(receiveMsg.getKind().equals("RESOURCE_REQ")) {
             if(state == ClientState.HELD || voted) {
               synchronized(recvWaitQueue) {
-                recvWaitQueue.add(receiveMsg);
+                addToQueue(recvWaitQueue, receiveMsg);
+                
               }
             }
             else {
               String dest = receiveMsg.getSrc();
               mp.send(new TimeStampedMessage(dest, "RESOURCE_RESPONSE", "", mp.getClockSer().getTs(), mp.getLocalName()));
+              synchronized(numMsgSent) {
+                numMsgSent++;
+              }
               voted = true;
             }
           }
@@ -107,6 +144,9 @@ public class ResourceClient {
                 TimeStampedMessage removedMsg = (TimeStampedMessage)recvWaitQueue.remove();
                 String dest = removedMsg.getSrc();
                 mp.send(new TimeStampedMessage(dest, "RESOURCE_RESPONSE", "", mp.getClockSer().getTs(), mp.getLocalName()));
+                synchronized(numMsgSent) {
+                  numMsgSent++;
+                }
                 voted = true;
               }
             }
@@ -116,7 +156,7 @@ public class ResourceClient {
           }
           else if(receiveMsg.getKind().equals("RESOURCE_RESPONSE")) {
             synchronized(recvPermitQueue) {
-              recvPermitQueue.add(receiveMsg);
+              addToQueue(recvPermitQueue, receiveMsg);
             }
           }
           else {
@@ -131,8 +171,8 @@ public class ResourceClient {
         }
       }
     }
-    
   }
+  
   public class collectResponse extends Thread {
 
     public collectResponse() {
