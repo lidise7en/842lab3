@@ -121,11 +121,14 @@ public class CmdTool {
       			//this.msgPasser.logEvent(array[1], this.msgPasser.getClockSer().getTs().makeCopy());
       		}
       		else if (array[0].equals("resource")) {
-      		  if (array[1].equals("get")) {
+      		  if (array[1].equals("get")) {      		    
       		    rscClient.getResource();
       		  }
       		  else if (array[1].equals("release")) {
       		    rscClient.releaseResource();
+      		  }
+      		  else if (array[1].equals("print")) {
+      		    rscClient.printStatus();
       		  }
       		  else {
       		    System.out.println("Invalid Command!");
