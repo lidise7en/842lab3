@@ -1,24 +1,33 @@
 configuration :
     - name : p1 
-      ip: 128.237.222.197
+      ip: localhost
       port : 49996
       clockType: vector
     - name : p2 
-      ip : 128.237.222.197
+      ip : localhost
       port : 42558   
       clockType: vector
     - name : p3  
-      ip : 128.237.208.157 
+      ip : localhost 
       port : 50003  
       clockType: vector
     - name : p4
-      ip : 128.237.208.157 
+      ip : localhost 
       port : 59877  
       clockType: vector
-    - name : logger
-      ip : 128.237.222.197
-      port : 59879
+    - name : p5
+      ip : localhost
+      port : 59881
       clockType: vector
+    - name : p6
+      ip : localhost
+      port : 59883
+      clockType: vector
+    - name : p7
+      ip : localhost
+      port : 59899
+      clockType: vector
+
 sendRules :
     - action : delay
       dest : p4
@@ -61,13 +70,44 @@ receiveRules :
       dest : p4
       kind : HTTP_DELAY
 groupList : 
-    - groupName : Group1
+    - groupName : Groupp1
       members :
         - membername : p1
         - membername : p2
-        - membername : p4
+        - membername : p3
 
-    - groupName : Group2
+    - groupName : Groupp2
       members : 
         - membername : p2
+        - membername : p4
+	- membername : p6
+
+    - groupName : Groupp3
+      members : 
         - membername : p3
+        - membername : p5
+	- membername : p6
+
+    - groupName : Groupp4
+      members : 
+        - membername : p1
+        - membername : p4
+	- membername : p5
+
+    - groupName : Groupp5
+      members : 
+        - membername : p2
+        - membername : p5
+	- membername : p7
+
+    - groupName : Groupp6
+      members : 
+        - membername : p1
+        - membername : p6
+	- membername : p7
+
+    - groupName : Groupp7
+      members : 
+        - membername : p3
+        - membername : p4
+	- membername : p7

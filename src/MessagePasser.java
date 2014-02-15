@@ -287,7 +287,10 @@ public class MessagePasser {
 					}
 				}
 			}
-
+			/*populate the  rscGroupMap */
+			for(SocketInfo sInfo : this.config.configuration) {
+				this.rscGroupMap.put(sInfo.getName(), "Group" + sInfo.getName());
+			}
 			/* start the listen thread */
 			new startListen().start();
 			new sendPeriodNACK().start();
