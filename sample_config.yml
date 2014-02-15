@@ -30,7 +30,8 @@ configuration :
 
 sendRules :
     - action : delay
-      src  : p2
+      dest : p1
+      src  : p3
       
 receiveRules :
 
