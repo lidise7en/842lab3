@@ -30,45 +30,11 @@ configuration :
 
 sendRules :
     - action : delay
-      dest : p4
-      kind : HTTP_REPLY
+      dest : p1
+      src  : p3
       
-    - action : delay
-      kind : delay
-    
-    - action : drop
-      src : p1  
-      dest : p3
+receiveRules :
 
-    - action : drop
-      src : p1
-      dest : p2
-      kind : Ack
-
-    - action : drop
-      src : p1
-      kind : Ran
-
-    - action : duplicate
-      kind : Request
-      dest : p4
-
-    - action : duplicate
-      kind : Random
-      dest : p2
-
-    - action : delay
-      kind : log    
-      
-receiveRules :    
-    - action : drop
-      src : p2
-      dest : p4
-      duplicate : true
-
-    - action : delay
-      dest : p4
-      kind : HTTP_DELAY
 groupList : 
     - groupName : Groupp1
       members :

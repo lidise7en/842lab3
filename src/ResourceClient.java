@@ -11,6 +11,8 @@ public class ResourceClient {
   private Integer numMsgSent = 0;
   private Integer numMsgReceived = 0;
   
+  private static boolean DEBUG = true;
+  
   public enum ClientState {
     RELEASED, WANTED, HELD
   }
@@ -77,6 +79,10 @@ public class ResourceClient {
       }
       queue.add(i, msg);
     }
+    if (DEBUG) {
+      String queuename = queue.equals(recvPermitQueue) ? "Permit Queue" : "Wait Queue";
+      System.out.println("Adding msg in queue" + queuename + ": " + msg.toString());
+    }
   }
   
   public MessagePasser getMp() {
@@ -118,6 +124,9 @@ public class ResourceClient {
       while(true) {
         TimeStampedMessage receiveMsg = (TimeStampedMessage)mp.receive();
         if (receiveMsg != null) {
+          if (DEBUG)
+            System.out.println("Received: " + receiveMsg.toString());
+          
           synchronized(numMsgReceived) {
             numMsgReceived++;
           }
@@ -131,7 +140,11 @@ public class ResourceClient {
             }
             else {
               String dest = receiveMsg.getSrc();
-              mp.send(new TimeStampedMessage(dest, "RESOURCE_RESPONSE", "", mp.getClockSer().getTs(), mp.getLocalName()));
+              TimeStampedMessage msg = new TimeStampedMessage(dest, "RESOURCE_RESPONSE", "", mp.getClockSer().getTs(), mp.getLocalName());
+              mp.send(msg);
+              if (DEBUG)
+                System.out.println("Sent: " + msg.toString());
+              
               synchronized(numMsgSent) {
                 numMsgSent++;
               }
@@ -143,7 +156,11 @@ public class ResourceClient {
               synchronized(recvWaitQueue) {
                 TimeStampedMessage removedMsg = (TimeStampedMessage)recvWaitQueue.remove();
                 String dest = removedMsg.getSrc();
-                mp.send(new TimeStampedMessage(dest, "RESOURCE_RESPONSE", "", mp.getClockSer().getTs(), mp.getLocalName()));
+                TimeStampedMessage msg = new TimeStampedMessage(dest, "RESOURCE_RESPONSE", "", mp.getClockSer().getTs(), mp.getLocalName());
+                mp.send(msg);
+                if (DEBUG)
+                  System.out.println("Sent: " + msg.toString());
+                
                 synchronized(numMsgSent) {
                   numMsgSent++;
                 }
