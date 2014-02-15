@@ -80,34 +80,34 @@ groupList :
       members : 
         - membername : p2
         - membername : p4
-	- membername : p6
+        - membername : p6
 
     - groupName : Groupp3
       members : 
         - membername : p3
         - membername : p5
-	- membername : p6
+        - membername : p6
 
     - groupName : Groupp4
       members : 
         - membername : p1
         - membername : p4
-	- membername : p5
+        - membername : p5
 
     - groupName : Groupp5
       members : 
         - membername : p2
         - membername : p5
-	- membername : p7
+        - membername : p7
 
     - groupName : Groupp6
       members : 
         - membername : p1
         - membername : p6
-	- membername : p7
+        - membername : p7
 
     - groupName : Groupp7
       members : 
         - membername : p3
         - membername : p4
-	- membername : p7
+        - membername : p7
